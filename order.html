@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Request a Service — YardLinkUp</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      min-height: 100vh;
+      padding: 24px 20px 60px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 28px;
+    }
+    .logo-mark {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: #11499c; display: flex; align-items: center;
+      justify-content: center; font-weight: 900; font-size: 20px;
+      color: #fff; flex-shrink: 0;
+    }
+    .logo-name { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .subtitle { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .service-card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 14px;
+      padding: 16px; margin-bottom: 12px; display: flex; align-items: center;
+      gap: 14px; cursor: pointer; text-decoration: none; color: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .service-card:active { opacity: 0.75; }
+    .service-emoji {
+      font-size: 26px; width: 48px; height: 48px; background: #0f172a;
+      border-radius: 12px; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+    }
+    .service-info { flex: 1; }
+    .service-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .service-desc { color: #64748b; font-size: 12px; margin-bottom: 4px; }
+    .service-price { color: #3ab732; font-size: 13px; font-weight: 700; }
+    .service-arrow { color: #475569; font-size: 18px; flex-shrink: 0; }
+    label {
+      display: block; color: #94a3b8; font-size: 13px;
+      font-weight: 600; margin-bottom: 6px;
+    }
+    .required { color: #f87171; }
+    input, textarea {
+      width: 100%; background: #1e293b; border: 1px solid #334155;
+      border-radius: 10px; padding: 14px; color: #f1f5f9; font-size: 16px;
+      margin-bottom: 16px; outline: none; -webkit-appearance: none;
+      font-family: inherit;
+    }
+    input::placeholder, textarea::placeholder { color: #475569; }
+    textarea { min-height: 90px; resize: none; }
+    input:focus, textarea:focus { border-color: #11499c; }
+    .service-chip {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 24px; display: flex;
+      align-items: center; gap: 12px;
+    }
+    .chip-emoji { font-size: 24px; }
+    .chip-name { font-size: 16px; font-weight: 700; }
+    .chip-price { color: #3ab732; font-size: 13px; font-weight: 700; margin-top: 2px; }
+    .gps-btn {
+      width: 100%; padding: 14px; border-radius: 10px;
+      border: 1px solid #4a7fd4; background: #0a2d6e; color: #fff;
+      font-size: 15px; font-weight: 700; margin-bottom: 8px;
+      cursor: pointer; font-family: inherit;
+    }
+    .gps-btn.saved { background: #1a5c14; border-color: #3ab732; }
+    .gps-status {
+      font-size: 12px; color: #64748b; text-align: center;
+      margin-bottom: 16px; min-height: 18px;
+    }
+    .submit-btn {
+      width: 100%; padding: 18px; border-radius: 14px; border: none;
+      background: #11499c; color: #fff; font-size: 17px; font-weight: 800;
+      cursor: pointer; margin-top: 4px; font-family: inherit;
+      -webkit-appearance: none;
+    }
+    .submit-btn:disabled { opacity: 0.4; cursor: default; }
+    .error-msg {
+      color: #f87171; font-size: 13px; text-align: center;
+      margin-bottom: 12px; min-height: 18px;
+    }
+    .success {
+      text-align: center; padding: 48px 0;
+      display: none;
+    }
+    .success .icon { font-size: 72px; margin-bottom: 20px; }
+    .success h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+    .success p { color: #64748b; line-height: 1.7; font-size: 15px; }
+    .back-link {
+      display: inline-block; color: #11499c; font-size: 14px;
+      font-weight: 600; margin-bottom: 24px; text-decoration: none;
+    }
+    #picker-view, #form-view { display: none; }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <div class="logo-mark">Y</div>
+    <span class="logo-name">YardLinkUp</span>
+  </div>
+
+  <!-- Picker: shown when no ?service= param -->
+  <div id="picker-view">
+    <h1>Request a Service</h1>
+    <p class="subtitle">Choose the service you need below.</p>
+    <div id="service-list"></div>
+  </div>
+
+  <!-- Form: shown when ?service= param present -->
+  <div id="form-view">
+    <a href="order.html" class="back-link">← All Services</a>
+    <div id="service-chip" class="service-chip"></div>
+
+    <div id="success" class="success">
+      <div class="icon">📍</div>
+      <h2>Request Sent!</h2>
+      <p>We received your service request.<br>We will contact you shortly to confirm.</p>
+    </div>
+
+    <div id="form-inner">
+      <label>Your name <span class="required">*</span></label>
+      <input id="inp-name" type="text" placeholder="John Emmanuel" autocomplete="name" />
+
+      <label>Phone number <span class="required">*</span></label>
+      <input id="inp-phone" type="tel" placeholder="758-XXX-XXXX" autocomplete="tel" />
+
+      <label>Location description</label>
+      <input id="inp-address" type="text" placeholder="Blue gate, near the school..." />
+
+      <label>Notes about the job</label>
+      <textarea id="inp-notes" placeholder="Describe what you need or any details that help..."></textarea>
+
+      <button class="gps-btn" id="gps-btn" onclick="getLocation()">📍 Save My Location</button>
+      <div class="gps-status" id="gps-status"></div>
+
+      <div class="error-msg" id="error-msg"></div>
+      <button class="submit-btn" id="submit-btn" onclick="submitForm()">Submit Request</button>
+    </div>
+  </div>
+
+<script>
+var SUPABASE_URL  = 'https://oyopmhmjkinygcspzyyv.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95b3BtaG1qa2lueWdjc3B6eXl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxMTc2ODYsImV4cCI6MjA5ODY5MzY4Nn0.rEY-kM3utt11PCJamu7J7bYpKzV0GnVaJU-lzAgWuFo';
+var EMOJI = { Solar:'☀️', HVAC:'❄️', Water:'💧', Electrical:'⚡', Plumbing:'🔧', Cleaning:'🧹' };
+
+var lat = null, lng = null;
+var currentServiceId = null;
+
+function supabaseGet(path) {
+  return fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
+  }).then(function(r) { return r.json(); });
+}
+
+function supabasePost(path, body) {
+  return fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': 'Bearer ' + SUPABASE_ANON,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(body)
+  }).then(function(r) { return r.json(); });
+}
+
+function supabasePatch(path, body) {
+  return fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': 'Bearer ' + SUPABASE_ANON,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(body)
+  });
+}
+
+function init() {
+  var params = new URLSearchParams(window.location.search);
+  var serviceId = params.get('service');
+
+  if (serviceId) {
+    showForm(serviceId);
+  } else {
+    showPicker();
+  }
+}
+
+function showPicker() {
+  document.getElementById('picker-view').style.display = 'block';
+  supabaseGet('services?select=id,name,description,price,price_label,category&active=eq.true&order=sort_order')
+    .then(function(services) {
+      var list = document.getElementById('service-list');
+      list.innerHTML = services.map(function(s) {
+        var emoji = EMOJI[s.category] || '🛠️';
+        var price = s.price != null ? s.price_label + ' $' + s.price : 'Quote on request';
+        return '<a href="order.html?service=' + s.id + '" class="service-card">'
+          + '<div class="service-emoji">' + emoji + '</div>'
+          + '<div class="service-info">'
+          + '<div class="service-name">' + s.name + '</div>'
+          + (s.description ? '<div class="service-desc">' + s.description + '</div>' : '')
+          + '<div class="service-price">' + price + '</div>'
+          + '</div>'
+          + '<div class="service-arrow">›</div>'
+          + '</a>';
+      }).join('');
+    })
+    .catch(function() {
+      document.getElementById('service-list').innerHTML = '<p style="color:#64748b">Could not load services. Please try again.</p>';
+    });
+}
+
+function showForm(serviceId) {
+  currentServiceId = serviceId;
+  document.getElementById('form-view').style.display = 'block';
+  supabaseGet('services?id=eq.' + serviceId + '&select=id,name,description,price,price_label,category&limit=1')
+    .then(function(data) {
+      if (!data || !data[0]) return;
+      var s = data[0];
+      var emoji = EMOJI[s.category] || '🛠️';
+      var price = s.price != null ? s.price_label + ' $' + s.price : 'Quote on request';
+      document.getElementById('service-chip').innerHTML =
+        '<span class="chip-emoji">' + emoji + '</span>'
+        + '<div><div class="chip-name">' + s.name + '</div>'
+        + '<div class="chip-price">' + price + '</div></div>';
+    });
+}
+
+function getLocation() {
+  var btn = document.getElementById('gps-btn');
+  var status = document.getElementById('gps-status');
+  btn.textContent = '⏳ Getting location...';
+  btn.disabled = true;
+  if (!navigator.geolocation) {
+    status.textContent = '⚠️ GPS not available on this device. Describe your location above.';
+    btn.textContent = '📍 Save My Location';
+    btn.disabled = false;
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+      btn.textContent = '✅ Location saved';
+      btn.className = 'gps-btn saved';
+      btn.disabled = false;
+      status.textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+    },
+    function(err) {
+      btn.textContent = '📍 Try Again';
+      btn.disabled = false;
+      status.textContent = '⚠️ Could not get location. Describe it in the field above.';
+    },
+    { enableHighAccuracy: true, timeout: 12000 }
+  );
+}
+
+function submitForm() {
+  var name    = document.getElementById('inp-name').value.trim();
+  var phone   = document.getElementById('inp-phone').value.trim();
+  var address = document.getElementById('inp-address').value.trim();
+  var notes   = document.getElementById('inp-notes').value.trim();
+  var errEl   = document.getElementById('error-msg');
+  var btn     = document.getElementById('submit-btn');
+
+  errEl.textContent = '';
+  if (!name)  { errEl.textContent = '⚠️ Please enter your name.'; return; }
+  if (!phone) { errEl.textContent = '⚠️ Please enter your phone number.'; return; }
+  if (!lat)   { errEl.textContent = '⚠️ Please tap "Save My Location" first.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  // Check for existing manual customer with same phone
+  supabaseGet('manual_customers?phone=eq.' + encodeURIComponent(phone) + '&select=id&limit=1')
+    .then(function(existing) {
+      if (existing && existing[0]) {
+        // Update existing customer location
+        return supabasePatch('manual_customers?id=eq.' + existing[0].id, {
+          latitude: lat, longitude: lng,
+          location_notes: address || null, name: name
+        }).then(function() { return existing[0].id; });
+      } else {
+        // Create new manual customer
+        return supabasePost('manual_customers', {
+          name: name, phone: phone,
+          location_notes: address || null,
+          latitude: lat, longitude: lng
+        }).then(function(data) {
+          if (data && data[0]) return data[0].id;
+          throw new Error('Could not save customer');
+        });
+      }
+    })
+    .then(function(customerId) {
+      return supabasePost('orders', {
+        manual_customer_id: customerId,
+        service_id: currentServiceId,
+        notes: notes || null,
+        address_notes: address || null,
+        latitude: lat, longitude: lng,
+        status: 'pending',
+        photo_urls: []
+      });
+    })
+    .then(function(result) {
+      if (result && result[0]) {
+        document.getElementById('form-inner').style.display = 'none';
+        document.getElementById('success').style.display = 'block';
+      } else {
+        throw new Error('Order failed');
+      }
+    })
+    .catch(function(err) {
+      errEl.textContent = '⚠️ Something went wrong. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Submit Request';
+    });
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
