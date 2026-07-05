@@ -282,51 +282,40 @@ function submitForm() {
   btn.disabled = true;
   btn.textContent = 'Sending...';
 
-  // Check for existing manual customer with same phone
-  supabaseGet('manual_customers?phone=eq.' + encodeURIComponent(phone) + '&select=id&limit=1')
-    .then(function(existing) {
-      if (existing && existing[0]) {
-        // Update existing customer location
-        return supabasePatch('manual_customers?id=eq.' + existing[0].id, {
-          latitude: lat, longitude: lng,
-          location_notes: address || null, name: name
-        }).then(function() { return existing[0].id; });
-      } else {
-        // Create new manual customer
-        return supabasePost('manual_customers', {
-          name: name, phone: phone,
-          location_notes: address || null,
-          latitude: lat, longitude: lng
-        }).then(function(data) {
-          if (data && data[0]) return data[0].id;
-          throw new Error('Could not save customer');
-        });
-      }
+  // Call the secure RPC function (runs as service role, accessible anonymously)
+  fetch(SUPABASE_URL + '/rest/v1/rpc/submit_order_form', {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': 'Bearer ' + SUPABASE_ANON,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      p_service_id:    currentServiceId,
+      p_name:          name,
+      p_phone:         phone,
+      p_address_notes: address || null,
+      p_notes:         notes   || null,
+      p_latitude:      lat,
+      p_longitude:     lng
     })
-    .then(function(customerId) {
-      return supabasePost('orders', {
-        manual_customer_id: customerId,
-        service_id: currentServiceId,
-        notes: notes || null,
-        address_notes: address || null,
-        latitude: lat, longitude: lng,
-        status: 'pending',
-        photo_urls: []
-      });
-    })
-    .then(function(result) {
-      if (result && result[0]) {
-        document.getElementById('form-inner').style.display = 'none';
-        document.getElementById('success').style.display = 'block';
-      } else {
-        throw new Error('Order failed');
-      }
-    })
-    .catch(function(err) {
-      errEl.textContent = '⚠️ Something went wrong. Please try again.';
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data && data.ok) {
+      document.getElementById('form-inner').style.display = 'none';
+      document.getElementById('success').style.display = 'block';
+    } else {
+      errEl.textContent = '⚠️ ' + (data.error || 'Something went wrong. Please try again.');
       btn.disabled = false;
       btn.textContent = 'Submit Request';
-    });
+    }
+  })
+  .catch(function() {
+    errEl.textContent = '⚠️ Network error. Please try again.';
+    btn.disabled = false;
+    btn.textContent = 'Submit Request';
+  });
 }
 
 window.addEventListener('DOMContentLoaded', init);
